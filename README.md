@@ -10,7 +10,7 @@ Use command:
 
      * Name of the venue
      * Venue location
-     * Date of the Event (use moment to format this as "MM/DD/YYYY")
+     * Date of the Event
 
 ![GitHub Logo](/pictures/liri-concert-this.png)
 
