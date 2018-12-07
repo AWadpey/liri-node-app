@@ -3,30 +3,30 @@ require("dotenv").config();
 
 var keys = require("./keys.js");
 var fs = require("fs");
+var axios = require('axios');
+var moment = require('moment')
 var Spotify = require('node-spotify-api');
 var spotify = new Spotify(keys.spotify);
-var request = require("request");
-var movieName = process.argv[3];
-var liriReturn = process.argv[2];
-var bands = require('bands');
-var client = new bands(keys.bands);
+var input = process.argv[3];
+var command = process.argv[2];
+
 
 //switch for different commands
-switch (liriReturn) {
+switch (command) {
     case "concert-this":
-        bandsInTown();
+        bandsInTown(input);
         break;
 
     case "spotify-this-song":
-        spotifyThisSong();
+        spotifyThisSong(input);
         break;
 
     case "movie-this":
-        movieThis();
+        movieThis(input);
         break;
 
     case "do-what-it-says":
-        dpWhatItSays();
+        doWhatItSays(input);
         break;
 
 // istructions for other users
@@ -38,62 +38,84 @@ switch (liriReturn) {
         "use quotes for multiword titles!");        
 };
 
-//command 1: concert-this
-function bandsInTown() {
-    var params = {  }
-}
+function bandsInTown(bandsInTown) {
+    axios.get(
+        "https://rest.bandsintown.com/artists/" + bandsInTown + "/events?app_id=codingbootcamp"
+    ).then(function (response) {
+        let reply = response.data;
+        console.log(bandsInTown + " has " + reply.length + " upcoming concerts!");
+        for (let i = 0; i < reply.length; i++) {
+            console.log(` `);
+            console.log("Venue: " + reply[i].venue.name);
+            console.log("Location: " + reply[i].venue.city + ", " + reply[i].venue.country);
+            console.log("Date: " + moment(reply[i].datetime).format("MMM Do, YYYY"));
+            console.log('------------------------------------------');
+        };
+    });
+};
 
-// command 2: spotify-this-song
-function spotifyThisSong() {
-    var songName = process.argv[3];
-    if (!songName) {
-        songName = "The Sign";
+
+function spotifyThisSong(spotifySong) {
+    var spotifySong = process.argv[3];
+    if (!spotifySong) {
+        spotifySong = "The Sign";
     };
-    songRequest = songName;
+    songRequest = spotifySong;
     spotify.search({
         type: "track",
-        query: songRequest    
+        query: songRequest
     },
-    function(err, data) {
-        if(!err) {
-            var songInfo = data.tracks.items;
-            for (var i = 0; i<5; i++) {
-                var spotifyRequest = 
-                    "Artist: " + songInfo[i].artists[0].name + "\n" +
-                    "Song: " + songInfo[i].name + "\n" +
-                    "Preview URL: " + songInfo[i].preview_url + "\n" +
-                    "Album: " + songInfo[i].album.name + "\n"
+        function (err, data) {
+            if (!err) {
+                var trackInfo = data.tracks.items;
+                for (var i = 0; i < 5; i++) {
+                    if (trackInfo[i] != undefined) {
+                        var spotifyResults =
+                            "\n" +
+                            "Artist: " + trackInfo[i].artists[0].name + "\n" +
+                            "Song: " + trackInfo[i].name + "\n" +
+                            "Preview URL: " + trackInfo[i].preview_url + "\n" +
+                            "Album: " + trackInfo[i].album.name + "\n" +
+                            "-----------------------------------"
 
-                console.log()
-            }
-        }
-    }
-    )
+                        console.log(spotifyResults);
+                        console.log(' ');
+                    };
+                };
+            } else {
+                console.log("error: " + err);
+                return;
+            };
+        });
+};
 
-}
 
+function movieThis(movieThis) {
+    if (movieThis === undefined) { movieThis = 'Mr. Nobody' };
+    axios.get(
+        "http://www.omdbapi.com/?t=" + movieThis + "&y=&plot=short&apikey=trilogy").then(function (response) {
+        let reply = response.data
+            console.log('');
+            console.log("Title: " + reply.Title);
+            console.log("Year: " + reply.Year);
+            console.log("Actors: " + reply.Actors)
+            console.log("Origin Country: " + reply.Country);
+            console.log("Language: " + reply.Language);
+            console.log("Plot: " + reply.Plot);
+            console.log("IMDB Rating: " + reply.Ratings[0].Value);
+            console.log("Rotten Tomatoes Rating: " + reply.Ratings[1].Value);
+            console.log('---------------------------------------');                    
+    });
+};
 
-// command 3: movie-this
-function movieThis() {
-    var queryUrl = "http//www.omdbapi.com/?t=" + movieName + "09b9f8c2e3f24a0c967226dc74554689";
+function doWhatItSays() {
 
-    request(queryUrl, function (error, response, body) {
-        if (!error && response.statusCode === 200) {
-            var myMovieData = JSON.parset(body);
-            var queryURLResults = 
-                "Title: " + myMovieData.Title + "\n" +
-                "Year: " + myMovieData.Year + "\n" +
-                "IMBD Rating: " + myMovieData.Ratings[0].Value + "\n" +
-                "Rotten Tomatoes Rating: " + myMovieData.Ratings[1].Value + "\n" +
-                "Origin Country: " + myMovieData.Country + "\n" +
-                "Language: " + myMovieData.Language + "\n" +
-                "Plot: " + myMovieData.Plot + "\n" +
-                "Actors: " + myMovieData.Actors + "\n"
+    fs.writeFile("random.txt", 'spotify-this-song,"I Want it That Way"', function (err) {
+        var song = "spotify-this-song 'I Want it That Way'"
+        if (err) {
+            return console.log(err);
+        };
 
-                console.log(queryURLResults);
-        }
-        else {
-
-        }
-    })
-}
+        console.log(song);
+    });
+};
